@@ -7,7 +7,7 @@ action=$1
 domain=$2
 rootDir=$3
 owner=$(who am i | awk '{print $1}')
-email='webmaster@localhost'
+email='webmaster@'$2
 sitesEnable='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
 userDir='/var/www/'
@@ -33,7 +33,7 @@ do
 done
 
 if [ "$rootDir" == "" ]; then
-	rootDir=${domain//./}
+	rootDir=$domain
 fi
 
 ### if root dir starts with '/', don't use /var/www as default starting point
@@ -56,7 +56,7 @@ if [ "$action" == 'create' ]
 			### create the directory
 			mkdir $rootDir
 			### give permission to root dir
-			chmod 755 $rootDir
+			chmod 775 $rootDir
 			### write test file in the new domain dir
 			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/phpinfo.php
 			then
@@ -74,11 +74,8 @@ if [ "$action" == 'create' ]
 			ServerName $domain
 			ServerAlias $domain
 			DocumentRoot $rootDir
-			<Directory />
-				AllowOverride All
-			</Directory>
 			<Directory $rootDir>
-				Options Indexes FollowSymLinks MultiViews
+				Options FollowSymLinks
 				AllowOverride all
 				Require all granted
 			</Directory>
@@ -93,45 +90,32 @@ if [ "$action" == 'create' ]
 			echo -e $"\nNew Virtual Host Created\n"
 		fi
 
-		### Add domain in /etc/hosts
-		if ! echo "127.0.0.1	$domain" >> /etc/hosts
-		then
-			echo $"ERROR: Not able to write in /etc/hosts"
-			exit;
-		else
-			echo -e $"Host added to /etc/hosts file \n"
-		fi
+# 		### Set ownership
+		chown -R www-data:www-data $rootDir
 
-		if [ "$owner" == "" ]; then
-			chown -R $(whoami):$(whoami) $rootDir
-		else
-			chown -R $owner:$owner $rootDir
-		fi
-
-		### enable website
+#		### enable website
 		a2ensite $domain
 
 		### restart Apache
-		/etc/init.d/apache2 reload
+		service apache2 reload
 
 		### show the finished message
 		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $rootDir"
 		exit;
-	else
+fi
+
+if [ "$action" == 'delete' ];
+	then
 		### check whether domain already exists
 		if ! [ -e $sitesAvailabledomain ]; then
 			echo -e $"This domain does not exist.\nPlease try another one"
 			exit;
 		else
-			### Delete domain in /etc/hosts
-			newhost=${domain//./\\.}
-			sed -i "/$newhost/d" /etc/hosts
-
 			### disable website
 			a2dissite $domain
 
 			### restart Apache
-			/etc/init.d/apache2 reload
+			service apache2 reload
 
 			### Delete virtual host rules files
 			rm $sitesAvailabledomain
@@ -146,8 +130,6 @@ if [ "$action" == 'create' ]
 				### Delete the directory
 				rm -rf $rootDir
 				echo -e $"Directory deleted"
-			else
-				echo -e $"Host directory conserved"
 			fi
 		else
 			echo -e $"Host directory not found. Ignored"
