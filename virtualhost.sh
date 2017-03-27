@@ -68,21 +68,20 @@ if [ "$action" == 'create' ]
 		fi
 
 		### create virtual host rules file
-		if ! echo "
-		<VirtualHost *:80>
-			ServerAdmin $email
-			ServerName $domain
-			ServerAlias $domain
-			DocumentRoot $rootDir
-			<Directory $rootDir>
-				Options FollowSymLinks
-				AllowOverride all
-				Require all granted
-			</Directory>
-			ErrorLog /var/log/apache2/$domain-error.log
-			LogLevel error
-			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $sitesAvailabledomain
+		if ! echo "<VirtualHost *:80>
+	ServerAdmin $email
+	ServerName $domain
+	ServerAlias $domain
+	DocumentRoot $rootDir
+	<Directory $rootDir>
+		Options FollowSymLinks
+		AllowOverride all
+		Require all granted
+	</Directory>
+	ErrorLog /var/log/apache2/$domain-error.log
+	LogLevel error
+	CustomLog /var/log/apache2/$domain-access.log combined
+</VirtualHost>" > $sitesAvailabledomain
 		then
 			echo -e $"There is an ERROR creating $domain file"
 			exit;
@@ -135,7 +134,7 @@ if [ "$action" == 'delete' ];
 			echo -e $"Host directory not found. Ignored"
 		fi
 
-		### show the finished message
+		### show the finished message 
 		echo -e $"Complete!\nYou just removed Virtual Host $domain"
 		exit 0;
 fi
